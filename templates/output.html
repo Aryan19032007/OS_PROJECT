@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GUI Launch Status • Page Replacement Algorithm</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body class="output">
+    <div class="bg">
+      <div class="bg__grid"></div>
+      <div class="bg__glow"></div>
+    </div>
+
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="/" aria-label="Go home">
+          <span class="brand__dot"></span>
+          <span class="brand__text">Paging</span>
+        </a>
+        <nav class="nav">
+          <a href="/" class="nav__cta">Back</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="section">
+      <div class="container">
+        <div class="section__header">
+          <h2>GUI launch status</h2>
+          <p>
+            Launch request for <code>page_replacement (1).py</code> has been processed.
+          </p>
+        </div>
+
+        <div class="grid grid--2">
+          <article class="card">
+            <h3>Result</h3>
+            <div class="kvs">
+              <div class="kv">
+                <div class="kv__k">Status</div>
+                <div class="kv__v"><code>{% if launch_ok %}SUCCESS{% else %}FAILED{% endif %}</code></div>
+              </div>
+            </div>
+            <div class="hero__actions" style="margin-top: 14px">
+              <a class="btn btn--ghost" href="/">Back to page</a>
+              <a class="btn btn--primary" href="/#run">Launch again</a>
+            </div>
+          </article>
+
+          <article class="card">
+            <h3>Details</h3>
+            <p>
+              {% if launch_ok %}
+              Your Tkinter visualizer should open as a separate desktop window.
+              {% else %}
+              The GUI could not be started from Flask.
+              {% endif %}
+            </p>
+            <p class="muted">{{ launch_message }}</p>
+          </article>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__left">
+          <div class="footer__title">Page Replacement Algorithm</div>
+          <div class="footer__sub">Output page</div>
+        </div>
+        <div class="footer__right">
+          <a href="/">Home</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

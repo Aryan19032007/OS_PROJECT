@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page Replacement Algorithm</title>
+    <meta name="description" content="A web page about paging: FIFO, Optimal, and LRU page replacement." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <div class="bg">
+      <div class="bg__grid"></div>
+      <div class="bg__glow"></div>
+    </div>
+
+    <header class="topbar">
+      <div class="container topbar__inner">
+        <a class="brand" href="#top" aria-label="Go to top">
+          <span class="brand__dot"></span>
+          <span class="brand__text">Paging</span>
+        </a>
+        <nav class="nav">
+          <a href="#paging">Paging</a>
+          <a href="#algorithms">Algorithms</a>
+          <a href="#compare">Compare</a>
+          <a href="#run" class="nav__cta">Run Python</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="container hero__inner">
+          <div class="hero__copy">
+            <p class="badge">Operating Systems • Memory Management</p>
+            <h1>Page Replacement Algorithm</h1>
+            <p class="subtitle">A web page about paging</p>
+
+            <p class="lead">
+              Paging makes memory feel bigger than it really is by splitting programs into fixed-size pages
+              and loading only what’s needed. When physical memory fills up, the OS chooses a victim page to
+              evict—this decision is controlled by a page replacement algorithm.
+            </p>
+
+            <div class="hero__stats">
+              <div class="stat">
+                <div class="stat__k">Goal</div>
+                <div class="stat__v">Minimize page faults</div>
+              </div>
+              <div class="stat">
+                <div class="stat__k">Key metric</div>
+                <div class="stat__v">Hit vs. fault ratio</div>
+              </div>
+              <div class="stat">
+                <div class="stat__k">Classic policies</div>
+                <div class="stat__v">FIFO • Optimal • LRU</div>
+              </div>
+            </div>
+
+            <div class="hero__actions">
+              <a class="btn btn--primary" href="#paging">Start reading</a>
+              <a class="btn btn--ghost" href="#run">Jump to GUI launcher</a>
+            </div>
+          </div>
+
+          <div class="hero__panel" aria-hidden="true">
+            <div class="panel">
+              <div class="panel__title">Mental model</div>
+              <div class="panel__body">
+                <div class="chips">
+                  <span class="chip">Virtual memory</span>
+                  <span class="chip">Pages</span>
+                  <span class="chip">Frames</span>
+                  <span class="chip">Page table</span>
+                  <span class="chip">TLB</span>
+                  <span class="chip">Page fault</span>
+                </div>
+                <div class="mini">
+                  <div class="mini__row">
+                    <span class="mini__label">When page is absent</span>
+                    <span class="mini__value">→ page fault</span>
+                  </div>
+                  <div class="mini__row">
+                    <span class="mini__label">If free frame exists</span>
+                    <span class="mini__value">→ load page</span>
+                  </div>
+                  <div class="mini__row">
+                    <span class="mini__label">If memory is full</span>
+                    <span class="mini__value">→ replace a page</span>
+                  </div>
+                </div>
+                <div class="panel__hint">
+                  Replacement is a trade-off: correctness is guaranteed, performance is not.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="paging" class="section">
+        <div class="container">
+          <div class="section__header">
+            <h2>What is Paging?</h2>
+            <p>
+              Paging is a memory management technique that divides a process’s virtual address space into
+              fixed-size <strong>pages</strong> and divides physical memory into equally sized <strong>frames</strong>.
+              The operating system maintains a <strong>page table</strong> to map virtual pages to physical frames.
+            </p>
+          </div>
+
+          <div class="grid grid--2">
+            <article class="card">
+              <h3>Why paging exists</h3>
+              <p>
+                Without paging, programs would need a single contiguous block of RAM, which leads to
+                external fragmentation and inefficient memory usage. Paging lets the OS place pages anywhere
+                in physical memory and keep programs isolated from one another.
+              </p>
+              <ul class="list">
+                <li><strong>Isolation</strong> between processes via per-process page tables</li>
+                <li><strong>Flexibility</strong> to load only actively used pages (demand paging)</li>
+                <li><strong>Simpler allocation</strong> because frames are fixed size</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <h3>What is a page fault?</h3>
+              <p>
+                A page fault happens when a program references a virtual page that is not currently in RAM.
+                The OS pauses the process, finds the page on disk (swap/pagefile), loads it into a free frame
+                (or replaces an existing page), updates the page table, and then resumes execution.
+              </p>
+              <div class="callout">
+                <div class="callout__title">Performance note</div>
+                <div class="callout__text">
+                  Disk access is orders of magnitude slower than RAM. A good replacement policy reduces
+                  page faults—especially bursts of faults known as <em>thrashing</em>.
+                </div>
+              </div>
+            </article>
+          </div>
+
+          <article class="card card--wide">
+            <h3>Paging workflow (high level)</h3>
+            <ol class="steps">
+              <li><strong>CPU generates a virtual address</strong> (page number + offset).</li>
+              <li><strong>MMU consults the TLB/page table</strong> to translate page → frame.</li>
+              <li><strong>If present</strong>: memory access proceeds (a page hit).</li>
+              <li>
+                <strong>If absent</strong>: a page fault occurs; the OS loads the missing page, possibly evicting
+                another page if no free frames remain.
+              </li>
+              <li><strong>Update metadata</strong> (valid bit, frame number, timestamps/usage bits depending on policy).</li>
+            </ol>
+          </article>
+        </div>
+      </section>
+
+      <section id="algorithms" class="section">
+        <div class="container">
+          <div class="section__header">
+            <h2>The three classic replacement algorithms</h2>
+            <p>
+              A page replacement algorithm decides which page to evict when memory is full. Each policy uses a
+              different kind of “signal” (age, predicted future, or recent usage) to make a choice.
+            </p>
+          </div>
+
+          <div class="grid grid--3">
+            <article class="card">
+              <div class="pill pill--fifo">FIFO</div>
+              <h3>First In, First Out</h3>
+              <p>
+                FIFO evicts the page that has been in memory the longest. It’s conceptually simple: maintain a
+                queue of pages in the order they were loaded.
+              </p>
+              <ul class="list">
+                <li><strong>Strength</strong>: easy to implement and fast</li>
+                <li><strong>Weakness</strong>: can evict “hot” pages that are still heavily used</li>
+                <li><strong>Quirk</strong>: can show Belady’s anomaly (more frames → more faults)</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <div class="pill pill--opt">Optimal</div>
+              <h3>Optimal (MIN)</h3>
+              <p>
+                Optimal evicts the page that won’t be used for the longest time in the future. This policy
+                produces the minimum possible number of faults for a given reference string and frame count.
+              </p>
+              <ul class="list">
+                <li><strong>Strength</strong>: theoretical best (benchmark policy)</li>
+                <li><strong>Weakness</strong>: requires knowledge of the future</li>
+                <li><strong>Use</strong>: evaluating how close real policies get to the ideal</li>
+              </ul>
+            </article>
+
+            <article class="card">
+              <div class="pill pill--lru">LRU</div>
+              <h3>Least Recently Used</h3>
+              <p>
+                LRU evicts the page that hasn’t been used for the longest time in the past, based on the idea
+                of temporal locality: pages used recently are likely to be used again soon.
+              </p>
+              <ul class="list">
+                <li><strong>Strength</strong>: often performs close to optimal in practice</li>
+                <li><strong>Weakness</strong>: exact LRU needs tracking (timestamps/stack) and can be costly</li>
+                <li><strong>Reality</strong>: many systems approximate LRU with reference bits or aging</li>
+              </ul>
+            </article>
+          </div>
+
+          <article class="card card--wide">
+            <h3>A small example intuition</h3>
+            <p>
+              Suppose the next reference is a page that’s not currently in the frames. FIFO will remove the
+              oldest page, even if it’s about to be referenced again. LRU will remove the page you haven’t
+              touched in the longest time, which often aligns with “least useful now”. Optimal would remove
+              the page whose next future use is farthest away (or never occurs again).
+            </p>
+            <p>
+              The best policy depends on the access pattern. Sequential scans behave differently than looping
+              patterns; working sets change over time; and real systems need policies that are both effective
+              and cheap to maintain.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="compare" class="section">
+        <div class="container">
+          <div class="section__header">
+            <h2>Quick comparison</h2>
+            <p>
+              Here’s a practical way to compare: what data each policy needs, how expensive it is to track, and
+              what kind of behavior it tends to produce.
+            </p>
+          </div>
+
+          <div class="grid grid--2">
+            <article class="card">
+              <h3>Signals used to decide eviction</h3>
+              <div class="kvs">
+                <div class="kv">
+                  <div class="kv__k">FIFO</div>
+                  <div class="kv__v">Arrival time (age in memory)</div>
+                </div>
+                <div class="kv">
+                  <div class="kv__k">Optimal</div>
+                  <div class="kv__v">Future next-use distance (requires future knowledge)</div>
+                </div>
+                <div class="kv">
+                  <div class="kv__k">LRU</div>
+                  <div class="kv__v">Past last-used time (recency)</div>
+                </div>
+              </div>
+              <div class="callout callout--subtle">
+                <div class="callout__text">
+                  Real OSes often approximate “recency” because it’s a strong heuristic and can be tracked cheaply
+                  using bits/counters rather than exact timestamps.
+                </div>
+              </div>
+            </article>
+
+            <article class="card">
+              <h3>When page faults become a problem</h3>
+              <p>
+                If the working set of a process (the pages it needs frequently) doesn’t fit in the available frames,
+                the system can spend most of its time swapping pages in and out.
+              </p>
+              <ul class="list">
+                <li><strong>Thrashing</strong>: very high fault rate; low CPU utilization</li>
+                <li><strong>Symptoms</strong>: slow response, constant disk activity, poor throughput</li>
+                <li><strong>Fix</strong>: more frames, better replacement, or limit multiprogramming</li>
+              </ul>
+              <p>
+                Replacement algorithms matter because they decide how quickly you converge to keeping the working set in RAM.
+              </p>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="run" class="section section--run">
+        <div class="container">
+          <div class="section__header">
+            <h2>Launch the Python GUI</h2>
+            <p>
+              Scroll all the way down? You’re here. Use the button below to launch your project’s desktop Tkinter app
+              with the full visualizer interface.
+            </p>
+          </div>
+
+          <form class="runbox" method="post" action="/run">
+            <div class="runbox__actions">
+              <button class="btn btn--primary btn--lg" type="submit">
+                Open <span class="btn__mono">Smart Page Replacement Visualizer</span>
+              </button>
+              <p class="runbox__note">
+              Click this button to simulate Page Replacement Algorithms, bringing your learnings to LIFE!
+              </p>
+            </div>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__inner">
+        <div class="footer__left">
+          <div class="footer__title">Page Replacement Algorithm</div>
+          <div class="footer__sub">Built for an OS paging project.</div>
+        </div>
+        <div class="footer__right">
+          <a href="#top">Back to top</a>
+        </div>
+      </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='app.js') }}"></script>
+  </body>
+</html>
